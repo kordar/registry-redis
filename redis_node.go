@@ -15,6 +15,7 @@ type RedisNodeRegistryOptions struct {
 	Channel   string
 	Heartbeat time.Duration
 	Reload    func(data []string, channel string)
+	Weight    string
 }
 
 // RedisNodeRegistry redis节点注册
@@ -56,6 +57,17 @@ func (r *RedisNodeRegistry) Remove() error {
 	}
 }
 
+func (r *RedisNodeRegistry) regRemote() error {
+	data := map[string]string{
+		"node":         r.options.Node,
+		"refresh_time": time.Now().Format("2006-01-02 15:04:05"),
+		"status":       "online",
+		"weight":       r.options.Weight,
+	}
+	marshal, _ := json.Marshal(&data)
+	return r.client.Set(r.key(), string(marshal), r.options.Timeout).Err()
+}
+
 // Register 将节点信息写入到redis中,并向订阅者进行通知
 func (r *RedisNodeRegistry) Register() error {
 	r.heartOnce.Do(func() {
@@ -65,21 +77,17 @@ func (r *RedisNodeRegistry) Register() error {
 				select {
 				case <-ticker.C:
 					r.reload(r.options.Channel)
+					_ = r.regRemote()
 					break
 				}
 			}
 		}()
 	})
-	data := map[string]string{
-		"node":         r.options.Node,
-		"refresh_time": time.Now().Format("2006-01-02 15:04:05"),
-		"status":       "online",
-	}
-	marshal, _ := json.Marshal(&data)
-	if err := r.client.Set(r.key(), string(marshal), r.options.Timeout).Err(); err == nil {
+
+	if err := r.regRemote(); err == nil {
 		return PubMessage(r.client, r.options.Channel, "reload")
 	} else {
-		return err
+		return nil
 	}
 }
 
@@ -94,6 +102,7 @@ func (r *RedisNodeRegistry) Listener() {
 			},
 		})
 	})
+
 }
 
 func (r *RedisNodeRegistry) reload(channel string) {
