@@ -2,7 +2,6 @@ package registry_redis
 
 import (
 	"errors"
-	"fmt"
 	"github.com/go-redis/redis"
 )
 
@@ -36,7 +35,6 @@ func SubMessage(c *redis.Client, events ...Event) error {
 
 	ch := pubsub.Channel()
 	for msg := range ch {
-		fmt.Println("!!!!!!!!!!!!!!!!!!!!!!!")
 		fn[msg.Channel](msg.Payload, msg.Channel)
 	}
 

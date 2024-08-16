@@ -64,7 +64,6 @@ func (r *RedisNodeRegistry) Register() error {
 			for {
 				select {
 				case <-ticker.C:
-					fmt.Println("heartbeat run.....")
 					r.reload(r.options.Channel)
 					break
 				}

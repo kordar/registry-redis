@@ -2,6 +2,7 @@ package registry_redis_test
 
 import (
 	"github.com/go-redis/redis"
+	"github.com/kordar/registry"
 	"github.com/kordar/registry-redis"
 	"log"
 	"testing"
@@ -15,25 +16,25 @@ func TestRedisRegistry_Get(t *testing.T) {
 		DB:       1,
 	})
 
-	registry := registry_redis.NewRedisNodeRegistry(client, &registry_redis.RedisNodeRegistryOptions{
-		Prefix:  "aaaaaaa",
+	var redisnoderegistry registry.Registry = registry_redis.NewRedisNodeRegistry(client, &registry_redis.RedisNodeRegistryOptions{
+		Prefix:  "ABC",
 		Node:    "123.12.34.2:3320",
 		Timeout: time.Second * 30,
-		Channel: "bbbbb",
+		Channel: "BOB",
 		Reload: func(value []string, channel string) {
 			log.Println("--------------", value, channel)
 		},
 		Heartbeat: time.Second * 3,
 	})
-	registry.Listener()
+	redisnoderegistry.Listener()
 	time.Sleep(5 * time.Second)
-	_ = registry.Register()
+	_ = redisnoderegistry.Register()
 
 	registry2 := registry_redis.NewRedisNodeRegistry(client, &registry_redis.RedisNodeRegistryOptions{
-		Prefix:  "aaaaaaa",
+		Prefix:  "ABC",
 		Node:    "123.12.34.3:3320",
 		Timeout: time.Second * 30,
-		Channel: "bbbbb",
+		Channel: "BOB",
 		Reload: func(value []string, channel string) {
 			log.Println("22222222", value, channel)
 		},
